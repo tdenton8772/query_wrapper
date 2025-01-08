@@ -65,5 +65,8 @@ def create_app():
 
     from application.views import v1update
     app.register_blueprint(v1update.mod)
+
+    from application.views import v1execute
+    app.register_blueprint(v1execute.mod)
     return app
 

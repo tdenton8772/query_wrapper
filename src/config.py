@@ -18,6 +18,7 @@ class BaseConfig(object):
                     "db": int(os.environ.get("REDIS_DB", 0)),
                     "port": int(os.environ.get("REDIS_PORT", 6379)),
                     }
+    STARTREE_CONFIG = {"broker": "http://localhost", "port": 9000}
 
 config = {
     "default": "config.BaseConfig"
