@@ -9,8 +9,7 @@ mod = Blueprint('v1execute', __name__, url_prefix='/v1/execute')
 @verify_bearer_token()
 def execute_by_name(token, name):
     # Retrieve the Pinot configuration from the app config
-    pinot_broker_url = "{}:{}".format(current_app.config.get("PINOT_CONFIG")['broker'], 
-                                      current_app.config.get("PINOT_CONFIG")['port'])
+    pinot_broker_url = "{}".format(current_app.config.get("PINOT_CONFIG")['broker'])
     if not pinot_broker_url:
         return jsonify({"success": False, "error": "Pinot broker URL is not configured"}), 500
     
@@ -39,7 +38,7 @@ def execute_by_name(token, name):
             f"{pinot_broker_url}/query/sql",
             json={"sql": processed_sql},
             headers={"Content-Type": "application/json", 
-                     "Authorization": "Bearer {token}"}
+                     "Authorization": f"Bearer {token}"}
         )
 
         # Handle Pinot's response
@@ -57,9 +56,12 @@ def execute_by_name(token, name):
 @mod.route('/version/<uuid>', methods=['POST'])
 @verify_bearer_token()
 def execute_by_version(token, uuid):
-    """
-    Execute SQL for the given version (UUID) using parameters from the request body or defaults.
-    """
+    # Retrieve the Pinot configuration from the app config
+    pinot_broker_url = "{}".format(current_app.config.get("PINOT_CONFIG")['broker'])
+    if not pinot_broker_url:
+        return jsonify({"success": False, "error": "Pinot broker URL is not configured"}), 500
+    
+    # Execute SQL for the given version (UUID) using parameters from the request body or defaults.
     redis_client = current_app.get_redis_client()
 
     try:
@@ -77,4 +79,23 @@ def execute_by_version(token, uuid):
     print(f"Executing SQL for version '{uuid}':")
     print(f"SQL: {processed_sql}")
 
-    return jsonify({"success": True, "sql": processed_sql}), 200
+    try:
+        # Send the query to the Pinot broker
+        response = requests.post(
+            f"{pinot_broker_url}/query/sql",
+            json={"sql": processed_sql},
+            headers={"Content-Type": "application/json", 
+                     "Authorization": f"Bearer {token}"}
+        )
+
+        # Handle Pinot's response
+        if response.status_code != 200:
+            return jsonify({"success": False, "error": "Failed to query Pinot", "details": response.text}), 500
+
+        pinot_response = response.json()
+
+        # Return the Pinot response to the client
+        return jsonify({"success": True, "data": pinot_response}), 200
+
+    except requests.RequestException as e:
+        return jsonify({"success": False, "error": "An error occurred while querying Pinot", "details": str(e)}), 500

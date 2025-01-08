@@ -18,7 +18,7 @@ class BaseConfig(object):
                     "db": int(os.environ.get("REDIS_DB", 0)),
                     "port": int(os.environ.get("REDIS_PORT", 6379)),
                     }
-    PINOT_CONFIG = {"broker": "http://localhost", "port": 8000}
+    PINOT_CONFIG = {"broker": "https://broker.pinot.flrg1s.s7e.startree.cloud", "controller": "https://pinot.flrg1s.s7e.startree.cloud"}
 
 config = {
     "default": "config.BaseConfig"

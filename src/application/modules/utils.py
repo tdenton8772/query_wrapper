@@ -3,7 +3,8 @@ from functools import wraps
 from flask import request, jsonify
 import re
 import json
-from flask import current_app
+from flask import current_app, session
+import requests
 
 def normalize_name(name):
     """
@@ -19,11 +20,41 @@ def normalize_name(name):
 
 def is_token_valid(token):
     """
-    Function to validate the bearer token.
-    Replace this with your actual token validation logic.
+    Function to validate the bearer token using Pinot's cluster_health endpoint.
+    Caches the validation result in the Flask session to avoid redundant checks.
     """
-    # Example: Validate against a hardcoded token for demonstration purposes
-    return token == "valid_token"
+    try:
+        # Check if the token is already validated and cached in the session
+        if session.get("validated_token") == token:
+            return True
+
+        # Retrieve the Pinot broker URL from the Flask app config
+        pinot_config = current_app.config.get("PINOT_CONFIG")
+        broker_url = pinot_config.get("broker")
+        if not broker_url:
+            raise ValueError("Pinot broker URL is missing in the configuration")
+
+        # Use the broker URL to validate the token
+        validate_url = f"{broker_url}/health"
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Send the request to validate the token
+        response = requests.get(validate_url, headers=headers)
+
+        # If the response is successful, cache the token in the session
+        if response.status_code == 200:
+            session["validated_token"] = token
+            return True
+
+        return False
+
+    except requests.RequestException as e:
+        # Log or handle the exception as needed
+        print(f"Error validating token: {str(e)}")
+        return False
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return False
 
 def verify_bearer_token():
     """

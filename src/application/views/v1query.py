@@ -12,8 +12,7 @@ def passthrough_query(token):
     Passes the query directly to Pinot and returns the response.
     """
     # Retrieve the Pinot configuration from the app config
-    pinot_broker_url = "{}:{}".format(current_app.config.get("PINOT_CONFIG")['broker'], 
-                                      current_app.config.get("PINOT_CONFIG")['port'])
+    pinot_broker_url = "{}".format(current_app.config.get("PINOT_CONFIG")['broker'])
     if not pinot_broker_url:
         return jsonify({"success": False, "error": "Pinot broker URL is not configured"}), 500
 
@@ -28,7 +27,7 @@ def passthrough_query(token):
             f"{pinot_broker_url}/query/sql",
             json={"sql": query["sql"]},
             headers={"Content-Type": "application/json", 
-                     "Authorization": "Bearer {token}"}
+                     "Authorization": f"Bearer {token}"}
         )
 
         # Handle Pinot's response
