@@ -1,6 +1,6 @@
 from flask import Blueprint, current_app, jsonify
 from application.modules import delete
-from application.modules.utils import verify_bearer_token
+from application.modules.utils import verify_bearer_token, normalize_name
 import json
 
 mod = Blueprint('v1delete', __name__, url_prefix='/v1/delete')
