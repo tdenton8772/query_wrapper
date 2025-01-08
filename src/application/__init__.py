@@ -15,7 +15,7 @@ def create_app():
     Session(app)
 
     # Initialize Redis client and store it in app.extensions
-    redis_client = create_redis_client()
+    redis_client = create_redis_client(app.config.get('REDIS_CONFIG'))
     app.extensions['redis_client'] = redis_client
 
     # Provide a reusable function for Redis client access

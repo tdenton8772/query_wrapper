@@ -3,6 +3,7 @@ from functools import wraps
 from flask import request, jsonify
 import re
 import json
+from flask import current_app
 
 def normalize_name(name):
     """
@@ -55,12 +56,12 @@ def verify_bearer_token():
         return wrapper
     return decorator
 
-def create_redis_client():
+def create_redis_client(config):
     """Initialize and return a Redis client."""
     return redis.StrictRedis(
-        host='localhost',
-        port=6379,
-        db=0,
+        host=config['host'],
+        port=config['port'],
+        db=config['db'],
         decode_responses=True
     )
 
@@ -103,6 +104,8 @@ def format_parameter(value, param_type):
     """
     if param_type == "column":
         return f'"{value}"'  # Double quotes for column names
+    if param_type == "table":
+        return str(value)  # No quotes for table names
     elif param_type == "string":
         return f"'{value}'"  # Single quotes for strings
     elif param_type == "integer":

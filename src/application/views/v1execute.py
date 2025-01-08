@@ -1,15 +1,20 @@
 from flask import Blueprint, current_app, request, jsonify
 from application.modules.utils import verify_bearer_token, get_sql_and_parameters, replace_parameters_in_sql
 import json
+import requests
 
 mod = Blueprint('v1execute', __name__, url_prefix='/v1/execute')
 
 @mod.route('/api/<name>', methods=['POST'])
 @verify_bearer_token()
 def execute_by_name(token, name):
-    """
-    Execute SQL for the given API name using parameters from the request body or defaults.
-    """
+    # Retrieve the Pinot configuration from the app config
+    pinot_broker_url = "{}:{}".format(current_app.config.get("PINOT_CONFIG")['broker'], 
+                                      current_app.config.get("PINOT_CONFIG")['port'])
+    if not pinot_broker_url:
+        return jsonify({"success": False, "error": "Pinot broker URL is not configured"}), 500
+    
+    # Execute SQL for the given API name using parameters from the request body or defaults.
     redis_client = current_app.get_redis_client()
     name = name.lower().replace(" ", "_")  # Normalize the name
 
@@ -28,7 +33,26 @@ def execute_by_name(token, name):
     print(f"Executing SQL for API name '{name}':")
     print(f"SQL: {processed_sql}")
 
-    return jsonify({"success": True, "sql": processed_sql}), 200
+    try:
+        # Send the query to the Pinot broker
+        response = requests.post(
+            f"{pinot_broker_url}/query/sql",
+            json={"sql": processed_sql},
+            headers={"Content-Type": "application/json", 
+                     "Authorization": "Bearer {token}"}
+        )
+
+        # Handle Pinot's response
+        if response.status_code != 200:
+            return jsonify({"success": False, "error": "Failed to query Pinot", "details": response.text}), 500
+
+        pinot_response = response.json()
+
+        # Return the Pinot response to the client
+        return jsonify({"success": True, "data": pinot_response}), 200
+
+    except requests.RequestException as e:
+        return jsonify({"success": False, "error": "An error occurred while querying Pinot", "details": str(e)}), 500
 
 @mod.route('/version/<uuid>', methods=['POST'])
 @verify_bearer_token()
