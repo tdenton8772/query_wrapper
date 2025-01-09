@@ -18,6 +18,30 @@ def normalize_name(name):
     name = re.sub(r"[^a-z0-9_\-]", "", name)  # Remove invalid characters
     return name
 
+def validate_sql_and_parameters(sql, parameters):
+    """
+    Validate that every parameter in the SQL query exists in the parameters object
+    and that the object types are valid.
+    """
+    print("got here")
+    # Extract placeholders from the SQL query
+    placeholders = re.findall(r"%(\w+)%", sql)
+    
+    # Check if each placeholder exists in the parameters and has a valid type
+    valid_types = {"column", "string", "integer", "bool"}
+    for placeholder in placeholders:
+        if placeholder not in parameters:
+            raise ValueError(f"Missing parameter definition for '{placeholder}' in parameters")
+        if not isinstance(parameters[placeholder], dict):
+            raise ValueError(f"Missing body for '{placeholder}'")
+        if "type" not in parameters[placeholder].keys():
+            raise ValueError(f"Missing type definition for '{placeholder}'")
+        if "default" not in parameters[placeholder].keys():
+            raise ValueError(f"Missing default definition for '{placeholder}'")
+        param_type = parameters[placeholder].get("type")
+        if param_type not in valid_types:
+            raise ValueError(f"Invalid type '{param_type}' for parameter '{placeholder}'. Must be one of {valid_types}")
+
 def is_token_valid(token):
     """
     Function to validate the bearer token using Pinot's cluster_health endpoint.

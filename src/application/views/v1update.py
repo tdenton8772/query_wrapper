@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, request, jsonify
-from application.modules.utils import verify_bearer_token, normalize_name
+from application.modules.utils import verify_bearer_token, normalize_name, validate_sql_and_parameters
 import json
 import uuid
 
@@ -20,6 +20,10 @@ def update_by_name(token, name):
     try:
         sql = data['sql']
         parameters = data['parameters']
+        # Validate SQL and parameters
+        validate_sql_and_parameters(sql, parameters)
+    except ValueError as e:
+        return json.dumps({'success': False, "error": str(e)}), 400, {'Content-Type': 'application/json'}
     except KeyError as e:
         return jsonify({"success": False, "error": f"Missing key: {str(e)}"}), 400
 
@@ -33,13 +37,6 @@ def update_by_name(token, name):
         if not latest_uuid:
             return jsonify({"success": False, "error": f"No versions found for API name '{name}'"}), 404
 
-        # Mark the old record as inactive
-        old_record = redis_client.get(latest_uuid)
-        if old_record:
-            old_record_data = json.loads(old_record)
-            old_record_data['active'] = False
-            redis_client.set(latest_uuid, json.dumps(old_record_data))
-
         # Create a new record with a new UUID
         new_uuid = str(uuid.uuid4())
         new_record = {
@@ -49,6 +46,13 @@ def update_by_name(token, name):
             "active": True
         }
         redis_client.set(new_uuid, json.dumps(new_record))
+        
+        # Mark the old record as inactive
+        old_record = redis_client.get(latest_uuid)
+        if old_record:
+            old_record_data = json.loads(old_record)
+            old_record_data['active'] = False
+            redis_client.set(latest_uuid, json.dumps(old_record_data))
 
         # Update the name list with the new UUID as the latest version
         redis_client.lpush(name, new_uuid)

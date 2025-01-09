@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, request, jsonify
-from application.modules.utils import verify_bearer_token, normalize_name
+from application.modules.utils import verify_bearer_token, normalize_name, validate_sql_and_parameters
 import json
 import uuid
 
@@ -17,8 +17,14 @@ def index(token):
         processed_request['sql'] = data['sql']
         processed_request['parameters'] = data['parameters']
         processed_request['active'] = True
+
+        # Validate SQL and parameters
+        validate_sql_and_parameters(processed_request['sql'], processed_request['parameters'])
+
     except KeyError as e:
         return json.dumps({'success': False, "error": f"Missing key: {str(e)}"}), 401, {'Content-Type': 'application/json'}
+    except ValueError as e:
+        return json.dumps({'success': False, "error": str(e)}), 400, {'Content-Type': 'application/json'}
 
     # Generate a UUID for the request
     request_id = str(uuid.uuid4())
