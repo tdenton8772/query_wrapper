@@ -27,9 +27,9 @@ The query_wrapper repository provides a Flask-based API layer for interacting wi
 
 ## Setup
 ### Prerequisites
-Python 3.8 or higher
-Apache Pinot running and accessible
-Redis for caching query configurations
+- Python 3.8 or higher
+- Apache Pinot running and accessible
+- Redis for caching query configurations
 
 ### Installation
 1. Clone the repository:
@@ -47,8 +47,8 @@ pip install -r requirements.txt
 
 3. Set up your environment variables or edit the config.py file to include:
 
-`REDIS_CONFIG` (host, port, db)
-`PINOT_CONFIG` (broker, controller)
+- `REDIS_CONFIG` (host, port, db)
+- `PINOT_CONFIG` (broker, controller)
 
 4. Run the Flask application:
 
