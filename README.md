@@ -20,6 +20,8 @@ The query_wrapper repository provides a Flask-based API layer for interacting wi
 
 ## Features
 - Manage and execute SQL queries dynamically.
+- Reuse saved parameterized queries
+- Standardize query syntax across all platforms
 - Proxy SQL queries directly to Apache Pinot.
 - Token-based authentication with caching for improved performance.
 - Simple API to list, create, update, and delete query configurations.
