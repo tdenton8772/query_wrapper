@@ -208,7 +208,8 @@ POST /v1/update/<name>
 {
     "sql": "SELECT * FROM table WHERE %column% = %value%",
     "parameters": {
-        "value": "denton"
+        "column": {"default": "lname", "type": "column"},
+        "value": {"default": "denton", "type": "string"}
     }
 }
 ```
