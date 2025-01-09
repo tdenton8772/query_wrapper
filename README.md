@@ -121,10 +121,18 @@ Executes a query based on the given API name or version UUID.
 ```json
 {
     "success": true,
-    "sql": "SELECT * FROM table WHERE fname = 'denton'",
-    "parameters": {
-        "column": "lname",
-        "value": "denton"
+    "data": {
+        "resultTable": {
+            "dataSchema": {
+                "columnNames": ["col1", "col2"],
+                "columnDataTypes": ["STRING", "LONG"]
+            },
+            "rows": [
+                ["value1", 123],
+                ["value2", 456]
+            ]
+        },
+        "exceptions": []
     }
 }
 ```
